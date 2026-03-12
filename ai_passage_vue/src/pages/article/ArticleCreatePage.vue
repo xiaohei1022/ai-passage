@@ -578,7 +578,7 @@ const hasQuota = computed(() => checkHasQuota(loginUserStore.loginUser))
 
 // 智能体步骤（对应后端 6 个步骤）
 const agentSteps = [
-  { title: '生成标题', description: 'AI 分析选题，生成吸睛标题' },
+  { title: '生成标题', description: 'AI 分析选题，生成吸引标题' },
   { title: '规划大纲', description: '构建文章结构，理清脉络' },
   { title: '撰写正文', description: '流式生成高质量文章内容' },
   { title: '分析配图', description: '智能分析配图需求和位置' },

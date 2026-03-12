@@ -6,7 +6,7 @@ import com.zhanyan.aipassage.model.entity.AgentLog;
 /**
  * 智能体日志 Mapper
  *
- * @author <a href="https://codefather.cn">编程导航学习圈</a>
+ * @author xiaoh
  */
 public interface AgentLogMapper extends BaseMapper<AgentLog> {
 

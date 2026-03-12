@@ -23,7 +23,7 @@ import static com.zhanyan.aipassage.constant.ArticleConstant.PICSUM_URL_TEMPLATE
  * Iconify 图标库检索服务
  * 提供 275k+ 开源图标检索和 SVG 生成
  *
- * @author <a href="https://codefather.cn">编程导航学习圈</a>
+ * @author xiaoh
  */
 @Service
 @Slf4j
