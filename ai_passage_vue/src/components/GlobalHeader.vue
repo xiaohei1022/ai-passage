@@ -128,9 +128,16 @@ const originItems = [
 
 // 过滤菜单项
 const menuItems = computed(() => {
+  const loginUser = loginUserStore.loginUser
+  const isLoggedIn = loginUser && loginUser.id
+  
+  // 未登录只显示首页和创作
+  if (!isLoggedIn) {
+    return originItems.filter((item) => item.key === '/' || item.key === '/create')
+  }
+  
   return originItems.filter((item) => {
     if (item.admin) {
-      const loginUser = loginUserStore.loginUser
       return loginUser && loginUser.userRole === 'admin'
     }
     return true
