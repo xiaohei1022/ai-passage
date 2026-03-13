@@ -176,6 +176,7 @@ declare namespace API {
     userAvatar?: string;
     userProfile?: string;
     userRole?: string;
+    quota?: number;
     createTime?: string;
     updateTime?: string;
   };
@@ -270,6 +271,7 @@ declare namespace API {
     userAvatar?: string;
     userProfile?: string;
     userRole?: string;
+    quota?: number;
     createTime?: string;
   };
 }

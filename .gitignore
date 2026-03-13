@@ -38,11 +38,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Frontend build
-frontend/dist/
-frontend/.nuxt/
-frontend/.output/
-frontend/.cache/
+# ai_passage_vue build
+ai_passage_vue/dist/
+ai_passage_vue/.nuxt/
+ai_passage_vue/.output/
+ai_passage_vue/.cache/
 
 # Log files
 *.log
@@ -54,7 +54,7 @@ Thumbs.db
 
 # Sensitive configuration
 src/main/resources/application-local.yml
-frontend/src/config/env.ts
+ai_passage_vue/src/config/env.ts
 
 # Environment variables (keep .env.example)
 .env

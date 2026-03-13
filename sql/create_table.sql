@@ -33,9 +33,9 @@ create table if not exists user
 -- 初始化数据
 -- 密码是 12345678（MD5 加密 + 盐值 zhanyan）
 INSERT INTO user (id, userAccount, userPassword, userName, userAvatar, userProfile, userRole) VALUES
-(1, 'admin', '10670d38ec32fa8102be6a37f8cb52bf', '管理员', '', '系统管理员', 'admin'),
-(2, 'user', '10670d38ec32fa8102be6a37f8cb52bf', '普通用户', '', '我是一个普通用户', 'user'),
-(3, 'test', '10670d38ec32fa8102be6a37f8cb52bf', '测试账号', '', '这是一个测试账号', 'user');
+(1, 'admin', '2181fc3a0a0714596352dac2a9ec385b', '管理员', '', '系统管理员', 'admin'),
+(2, 'user', '2181fc3a0a0714596352dac2a9ec385b', '普通用户', '', '我是一个普通用户', 'user'),
+(3, 'test', '2181fc3a0a0714596352dac2a9ec385b', '测试账号', '', '这是一个测试账号', 'user');
 
 -- 文章表（基础字段，style/phase/titleOptions/userDescription/enabledImageMethods 由增量脚本添加）
 create table if not exists article

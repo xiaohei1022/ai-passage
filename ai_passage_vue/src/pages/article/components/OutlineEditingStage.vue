@@ -140,6 +140,8 @@ import Sortable from 'sortablejs'
 import { aiModifyOutline } from '@/api/articleController'
 import { useLoginUserStore } from '@/stores/loginUser'
 import { isVip as checkIsVip } from '@/utils/permission'
+import type { SortableEvent } from 'sortablejs'
+
 
 interface OutlineSection {
   section: number
@@ -195,16 +197,38 @@ onMounted(() => {
       Sortable.create(outlineListRef.value, {
         animation: 150,
         handle: '.drag-handle',
-        onEnd: (evt) => {
+        onEnd: (evt: SortableEvent) => {
           const { oldIndex, newIndex } = evt
-          if (oldIndex !== undefined && newIndex !== undefined) {
-            const item = outlineSections.value.splice(oldIndex, 1)[0]
-            outlineSections.value.splice(newIndex, 0, item)
-            // 更新 section 序号
-            outlineSections.value.forEach((sec, idx) => {
-              sec.section = idx + 1
-            })
+
+          // 验证索引是否存在且为有效数字
+          if (oldIndex === undefined || newIndex === undefined) {
+            return
           }
+
+          // 验证索引是否在有效范围内
+          if (oldIndex < 0 || oldIndex >= outlineSections.value.length ||
+              newIndex < 0 || newIndex >= outlineSections.value.length) {
+            return
+          }
+
+          // 如果位置相同，无需移动
+          if (oldIndex === newIndex) {
+            return
+          }
+
+          const item = outlineSections.value.splice(oldIndex, 1)[0]
+
+          // 确保 item 存在
+          if (!item) {
+            return
+          }
+
+          outlineSections.value.splice(newIndex, 0, item)
+
+          // 更新 section 序号
+          outlineSections.value.forEach((sec, idx) => {
+            sec.section = idx + 1
+          })
         }
       })
     }
@@ -229,14 +253,30 @@ const deleteSection = (index: number) => {
 }
 
 const addPoint = (sectionIndex: number) => {
-  outlineSections.value[sectionIndex].points.push('')
+  const section = outlineSections.value[sectionIndex]
+  if (section) {
+    section.points.push('')
+  }
 }
 
 const deletePoint = (sectionIndex: number, pointIndex: number) => {
   const section = outlineSections.value[sectionIndex]
-  if (section.points.length > 1) {
-    section.points.splice(pointIndex, 1)
+  // 验证 section 和 points 是否存在
+  if (!section || !Array.isArray(section.points)) {
+    return
   }
+
+  // 验证 pointIndex 是否在有效范围内
+  if (pointIndex < 0 || pointIndex >= section.points.length) {
+    return
+  }
+
+  // 至少保留一个要点
+  if (section.points.length <= 1) {
+    return
+  }
+
+  section.points.splice(pointIndex, 1)
 }
 
 const handleConfirm = () => {

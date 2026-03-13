@@ -41,6 +41,8 @@ public class UserVO implements Serializable {
      */
     private String userRole;
 
+    private Integer quota;
+
     /**
      * 创建时间
      */

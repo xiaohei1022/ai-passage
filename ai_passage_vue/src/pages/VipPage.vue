@@ -212,7 +212,7 @@ onMounted(async () => {
 })
 
 // 购买处理
-/*const handlePurchase = async () => {
+const handlePurchase = async () => {
   if (!loginUserStore.loginUser.id) {
     message.warning('请先登录')
     router.push('/user/login')
@@ -224,21 +224,8 @@ onMounted(async () => {
     return
   }
 
-  purchasing.value = true
-  try {
-    const res = await createVipPaymentSession()
-    if (res.data.code === 0 && res.data.data) {
-      window.location.href = res.data.data
-    } else {
-      message.error(res.data.message || '创建支付失败')
-    }
-  } catch (error) {
-    console.error('创建支付失败:', error)
-    message.error('创建支付失败，请稀后重试')
-  } finally {
-    purchasing.value = false
-  }
-}*/
+  message.info('VIP 购买功能正在开发中，敬请期待')
+}
 </script>
 
 <style scoped lang="scss">

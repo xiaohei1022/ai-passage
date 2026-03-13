@@ -730,6 +730,24 @@ const startCreate = async () => {
   addLog('开始创建文章任务...', 'info')
 
   try {
+    // 先建立 SSE 连接，确保在后端开始处理前连接已就绪
+    const tempTaskId = 'temp_' + Date.now()
+    addLog('正在建立实时连接...', 'info')
+    eventSource = connectSSE(tempTaskId, {
+      onMessage: (msg) => {
+        // 在获取到真实 taskId 之前不处理消息
+      },
+      onError: () => {
+        // 临时连接，忽略错误
+      },
+      onComplete: () => {
+        // 临时连接，忽略
+      },
+    })
+
+    // 等待一小段时间确保 SSE 连接建立
+    await new Promise(resolve => setTimeout(resolve, 500))
+
     // 创建任务
     const res = await createArticle({
       topic: topic.value,
@@ -746,7 +764,10 @@ const startCreate = async () => {
     // 刷新用户信息（更新配额）
     await loginUserStore.fetchLoginUser()
 
-    // 建立 SSE 连接
+    // 关闭之前的临时 SSE 连接，建立新的正式连接
+    closeSSE(eventSource)
+    eventSource = null
+
     addLog('已建立实时连接，开始生成...', 'info')
     eventSource = connectSSE(taskId.value, {
       onMessage: handleSSEMessage,
@@ -757,6 +778,8 @@ const startCreate = async () => {
     const err = error as Error
     message.error(err.message || '创建任务失败')
     isCreating.value = false
+    closeSSE(eventSource)
+    eventSource = null
   }
 }
 
