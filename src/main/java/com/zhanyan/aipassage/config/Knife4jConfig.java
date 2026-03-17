@@ -29,7 +29,7 @@ public class Knife4jConfig {
 
     private final static Logger logger = LoggerFactory.getLogger(Knife4jConfig.class);
 
-    private static final String SERVICE_URL = "http://127.0.0.1:8567/api/doc.html";
+    private static final String SERVICE_URL = "http://127.0.0.1:8123/api/doc.html";
     private static final String API_INFO_TITLE = "AI文章管理系统接口文档";
     private static final String API_INFO_VERSION = "V1.0";
     private static final String API_INFO_DESCRIPTION = "提供文章管理、用户认证等RESTful API接口";
