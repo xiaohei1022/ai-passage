@@ -71,6 +71,11 @@ public class User implements Serializable {
     private Integer quota;
 
     /**
+     * 会员开通时间
+     */
+    private LocalDateTime vipTime;
+
+    /**
      * 编辑时间
      */
     private LocalDateTime editTime;

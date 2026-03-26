@@ -132,6 +132,12 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponsePaymentResultVO = {
+    code?: number;
+    data?: PaymentResultVO;
+    message?: string;
+  };
+
   type BaseResponseString = {
     code?: number;
     data?: string;
@@ -177,8 +183,16 @@ declare namespace API {
     userProfile?: string;
     userRole?: string;
     quota?: number;
+    vipTime?: string;
     createTime?: string;
     updateTime?: string;
+  };
+
+  type PaymentResultVO = {
+    orderNo?: string;
+    codeUrl?: string;
+    expireTime?: string;
+    status?: string;
   };
 
   type OutlineItem = {

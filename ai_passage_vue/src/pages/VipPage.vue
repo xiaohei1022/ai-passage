@@ -22,13 +22,13 @@
             </div>
             <h2 class="plan-name">永久会员</h2>
             <div class="price-display">
-              <span class="currency">$</span>
+              <span class="currency">￥</span>
               <span class="price">199</span>
               <span class="period">/永久</span>
             </div>
             <div class="original-price">
               <span class="original-label">原价</span>
-              <span class="original-value">$299</span>
+              <span class="original-value">￥299</span>
             </div>
           </div>
 
@@ -95,11 +95,46 @@
         </div>
       </div>
     </div>
+
+    <!-- 微信支付弹窗 -->
+    <a-modal
+      v-model:open="showPaymentModal"
+      title="微信支付"
+      :footer="null"
+      :closable="true"
+      :maskClosable="false"
+      width="360px"
+      @cancel="handlePaymentClose"
+    >
+      <div class="payment-modal-content">
+        <div class="payment-amount">
+          <span class="label">支付金额：</span>
+          <span class="amount">￥199.00</span>
+        </div>
+        <div class="qr-code-container">
+          <canvas ref="qrCodeCanvas" class="qr-code"></canvas>
+        </div>
+        <div class="payment-tips">
+          <p>请使用微信扫描上方二维码完成支付</p>
+          <p class="expire-tip" v-if="expireTime">
+            二维码有效期至：{{ expireTime }}
+          </p>
+        </div>
+        <a-button
+          v-if="paymentStatus === 'SUCCESS'"
+          type="primary"
+          block
+          @click="handlePaymentSuccess"
+        >
+          支付成功
+        </a-button>
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import {
@@ -115,18 +150,25 @@ import {
   GiftOutlined,
   QuestionCircleOutlined
 } from '@ant-design/icons-vue'
+import QRCode from 'qrcode'
 import { useLoginUserStore } from '@/stores/loginUser'
 import { isVip as checkIsVip } from '@/utils/permission'
+import { createWeChatPayOrder, getPaymentStatus } from '@/api/paymentController'
 
 const router = useRouter()
 const route = useRoute()
 const loginUserStore = useLoginUserStore()
 const purchasing = ref(false)
+const qrCodeCanvas = ref<HTMLCanvasElement | null>(null)
 
-// 是否是 VIP（管理员也视为 VIP）
+const showPaymentModal = ref(false)
+const currentOrderNo = ref('')
+const paymentStatus = ref('')
+const expireTime = ref('')
+let pollTimer: ReturnType<typeof setInterval> | null = null
+
 const isVip = computed(() => checkIsVip(loginUserStore.loginUser))
 
-// 会员特权列表
 const features = [
   {
     icon: RocketOutlined,
@@ -160,7 +202,6 @@ const features = [
   }
 ]
 
-// 价格卡片特性
 const pricingFeatures = [
   '无限创作配额',
   '全部高级配图功能',
@@ -169,7 +210,6 @@ const pricingFeatures = [
   '终身有效'
 ]
 
-// FAQ 列表
 const faqs = [
   {
     question: '支付后多久生效？',
@@ -185,11 +225,10 @@ const faqs = [
   },
   {
     question: '支付安全吗？',
-    answer: '我们使用 Stripe 国际支付平台，全程加密传输，安全可靠。'
+    answer: '我们使用微信支付平台，全程加密传输，安全可靠。'
   }
 ]
 
-// 检查支付结果
 onMounted(async () => {
   const success = route.query.success
   const cancelled = route.query.cancelled
@@ -211,7 +250,12 @@ onMounted(async () => {
   }
 })
 
-// 购买处理
+onUnmounted(() => {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+  }
+})
+
 const handlePurchase = async () => {
   if (!loginUserStore.loginUser.id) {
     message.warning('请先登录')
@@ -224,7 +268,94 @@ const handlePurchase = async () => {
     return
   }
 
-  message.info('VIP 购买功能正在开发中，敬请期待')
+  purchasing.value = true
+
+  try {
+    const res = await createWeChatPayOrder()
+    if (res.data.code === 0 && res.data.data) {
+      currentOrderNo.value = res.data.data.orderNo || ''
+      paymentStatus.value = 'PENDING'
+      
+      if (res.data.data.expireTime) {
+        expireTime.value = res.data.data.expireTime.replace('T', ' ').substring(0, 19)
+      }
+
+      showPaymentModal.value = true
+
+      await nextTick()
+      if (qrCodeCanvas.value && res.data.data.codeUrl) {
+        await QRCode.toCanvas(qrCodeCanvas.value, res.data.data.codeUrl, {
+          width: 200,
+          margin: 2
+        })
+      }
+
+      startPolling()
+    } else {
+      message.error(res.data.message || '创建订单失败')
+    }
+  } catch (error) {
+    message.error('创建订单失败，请稍后重试')
+  } finally {
+    purchasing.value = false
+  }
+}
+
+const startPolling = () => {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+  }
+
+  pollTimer = setInterval(async () => {
+    if (!currentOrderNo.value || paymentStatus.value === 'SUCCESS') {
+      return
+    }
+
+    try {
+      const res = await getPaymentStatus(currentOrderNo.value)
+      if (res.data.code === 0 && res.data.data) {
+        paymentStatus.value = res.data.data
+
+        if (res.data.data === 'SUCCESS') {
+          if (pollTimer) {
+            clearInterval(pollTimer)
+            pollTimer = null
+          }
+          await loginUserStore.fetchLoginUser()
+        } else if (res.data.data === 'CLOSED' || res.data.data === 'NOT_FOUND') {
+          if (pollTimer) {
+            clearInterval(pollTimer)
+            pollTimer = null
+          }
+          message.error('支付已过期，请重新下单')
+        }
+      }
+    } catch (error) {
+      console.error('查询支付状态失败', error)
+    }
+  }, 3000)
+}
+
+const handlePaymentClose = () => {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+  showPaymentModal.value = false
+  currentOrderNo.value = ''
+  paymentStatus.value = ''
+}
+
+const handlePaymentSuccess = () => {
+  showPaymentModal.value = false
+  Modal.success({
+    title: '支付成功！',
+    content: '恭喜您成为永久会员，已解锁全部高级功能！',
+    okText: '开始创作',
+    onOk: () => {
+      router.push('/create')
+    }
+  })
 }
 </script>
 
@@ -623,6 +754,51 @@ const handlePurchase = async () => {
   .features-section,
   .faq-section {
     padding: 24px;
+  }
+}
+
+/* 支付弹窗样式 */
+.payment-modal-content {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.payment-amount {
+  margin-bottom: 20px;
+  font-size: 16px;
+
+  .label {
+    color: var(--color-text-secondary);
+  }
+
+  .amount {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-primary);
+  }
+}
+
+.qr-code-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.qr-code {
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.payment-tips {
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+  }
+
+  .expire-tip {
+    margin-top: 8px;
+    color: var(--color-text-muted);
   }
 }
 </style>
